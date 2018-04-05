@@ -21,8 +21,8 @@ public:
         : a()
     {
         std::cout << "MyClass()\n";
-        some_memory = new int[50];
-        v = std::vector<int>(10);
+        some_memory = new int[50]; //this memory will be leaked
+        v           = std::vector<int>(10); //this gets cleaned up when the vector is destroyed
         throw std::runtime_error("Error");
     }
     ~MyClass()
