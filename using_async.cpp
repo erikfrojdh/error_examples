@@ -139,7 +139,8 @@ class multiSlsDetector
     }
 
     // Template for calling a member function for each slsDetector
-    // uses async to do this in parallel with 
+    // uses async to do this in parallel. Accepts variable number of arguments
+    // returns a  vector of the functions return type 
     template <typename... CT, typename RT>
     std::vector<RT> parallel_call(RT (slsDetector::*somefunc)(CT...), CT... Args)
     {
