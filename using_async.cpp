@@ -11,7 +11,7 @@ T element_if_all_equal(std::vector<T> v)
     //if the vector is emty we cannot return an element
     //this probably should be handled by the caller
     if (v.size() == 0)
-        throw(std::runtime_error("comparing on emty vector"));
+        throw(std::runtime_error("comparing on empty vector"));
 
     //if all elements are equal we return the first element
     //TODO how do we treat the case where elemets are not equal?
@@ -56,6 +56,7 @@ class slsDetector
     double someOtherParameter(int i, double v)
     {
         std::cout << det_id_ << ":slsDetector::someOtherParameter(" << i << ", " << v << ")\n";
+        //throw to have something to catch
         if (det_id_ == 2)
             throw(std::runtime_error("Detector " + std::to_string(det_id_) + " has a problem"));
         return static_cast<double>(i);
@@ -98,16 +99,18 @@ class multiSlsDetector
     slsDetector *operator[](size_t i)
     {
         //Providing access to detectors with range checking
+        //throw exception if out of range
         if (i < n_modules_)
             return &slsDetector_[i];
         else
             throw(std::range_error("Detector does not exist"));
     }
-    size_t n_modules_ules() { return n_modules_; }
+    size_t n_modules() { return n_modules_; }
 
     double exposureTime(double t)
     {
-        // using static cast to resolve overloaded functions
+        // static cast to resolve overloaded functions
+        // using can be used to shorten typenames
         // using tt = double(slsDetector::*)(double);
         auto v = parallel_call(static_cast<double (slsDetector::*)(double)>(&slsDetector::exposureTime), t);
         return element_if_all_equal(v);
@@ -116,17 +119,23 @@ class multiSlsDetector
     double exposureTime()
     {
         auto v = parallel_call(static_cast<double (slsDetector::*)()>(&slsDetector::exposureTime));
-        return v[0];
+        return element_if_all_equal(v);
     }
 
-    //overload from multi to set exposure time of one detector
+    //overload from multi to set exposure time of a single detector
+    //I tend to prefer overloads to if statements in a bigger function
+    //but that is mostly style
     double exposureTime(double t, size_t det_id)
     {
         return (*this)[det_id]->exposureTime(t);
     }
 
     void someOtherParameter(int i, double d){
-        auto v = parallel_call(&slsDetector::someOtherParameter, i, d);
+        parallel_call(&slsDetector::someOtherParameter, i, d);
+    }
+
+    void do_something(){
+        parallel_call(&slsDetector::do_something);
     }
 
     // Template for calling a member function for each slsDetector
@@ -176,6 +185,10 @@ int main()
 
     //Set the exposure time of a single detector
     d.exposureTime(5.36, 2);
+
+
+    //calling a function that returns void
+    d.do_something();
 
     //call an function where one module throws an exception
     //the exception is propagated from the thread that async launched
